@@ -1,0 +1,89 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Jupyter Notebook
+.ipynb_checkpoints
+*.ipynb
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+
+# Data and checkpoints (large files)
+data/raw/
+data/generated/
+data/processed/
+*.pkl
+*.pickle
+checkpoints/
+*.pt
+*.pth
+*.safetensors
+*.bin
+
+# Logs
+logs/
+*.log
+nohup.out
+slurm-*.out
+
+# Results
+results/
+experiments/
+outputs/
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+
+# Jekyll (for GitHub Pages website in docs/)
+_site/
+.sass-cache/
+.jekyll-cache/
+.jekyll-metadata
+Gemfile.lock
+
+# Keep structure - preserve .gitkeep files to maintain directory layout
+!data/.gitkeep
+!checkpoints/.gitkeep
+!results/.gitkeep

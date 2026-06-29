@@ -1,0 +1,23 @@
+title: "Self-CriTeach"
+description: "LLM Self-Teaching and Self-Critiquing for Improving Robotic Planning"
+author: "Jinbang Huang, Zhiyuan Li, et al."
+baseurl: "/Plan_LLM"
+url: "https://markli1hoshipu.github.io"
+
+# Build settings
+markdown: kramdown
+theme: minima
+
+# Exclude from processing
+exclude:
+  - Gemfile
+  - Gemfile.lock
+  - node_modules
+  - vendor
+  - .sass-cache
+  - .jekyll-cache
+
+# Plugins
+plugins:
+  - jekyll-seo-tag
+  - jekyll-sitemap

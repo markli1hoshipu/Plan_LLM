@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Self-CriTeach: LLM Self-Teaching for PDDL Planning</title>
+    <meta name="description" content="Self-CriTeach: LLM Self-Teaching and Self-Critiquing for Improving Robotic Planning via Automated Domain Generation">
+    <link rel="stylesheet" href="assets/css/style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Source+Sans+Pro:wght@400;600&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- Navigation -->
+    <nav>
+        <div class="container">
+            <div class="site-switcher" aria-label="Switch project site">
+                <div class="logo">Self-CriTeach<span class="switcher-hint" aria-hidden="true">▾</span></div>
+                <div class="site-switcher-menu" role="menu">
+                    <div class="site-switcher-label">Switch project</div>
+                    <a href="./" class="active" role="menuitem">
+                        <span class="site-name">Self-CriTeach</span>
+                        <span class="site-tag">current</span>
+                    </a>
+                    <a href="pddl-llm/" role="menuitem">
+                        <span class="site-name">PDDL-LLM</span>
+                        <span class="site-tag">sibling project</span>
+                    </a>
+                </div>
+            </div>
+            <ul>
+                <li><a href="#abstract">Abstract</a></li>
+                <li><a href="#contributions">Contributions</a></li>
+                <li><a href="#method">Method</a></li>
+                <li><a href="#results">Results</a></li>
+                <li><a href="#real-robot">Real Robot</a></li>
+                <li><a href="#code">Code</a></li>
+                <li><a href="#citation">Citation</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <div class="hero">
+        <div class="container">
+            <h1>Self-CriTeach</h1>
+            <p class="subtitle">LLM Self-Teaching and Self-Critiquing for<br>Improving Robotic Planning</p>
+            <div class="venue"><a href="https://arxiv.org/abs/2509.21543" target="_blank" rel="noopener" style="color: inherit; text-decoration: none;">arXiv:2509.21543</a></div>
+
+            <div class="authors">
+                <span>Jinbang Huang¹</span>, <span>Zhiyuan Li¹,²</span>, <span>Yuanzhao Hu¹,³</span>,
+                <span>Zhanguang Zhang¹</span>, <span>Mark Coates⁴</span>,
+                <span>Xingyue Quan¹</span>, <span>Yingxue Zhang¹</span>
+                <br>
+                <em>¹Huawei Noah's Ark Lab, ²University of Toronto, ³University of British Columbia, ⁴McGill University</em>
+            </div>
+
+            <div class="hero-buttons">
+                <a href="https://arxiv.org/abs/2509.21543" target="_blank" rel="noopener" class="btn btn-secondary">📄 arXiv</a>
+                <a href="papers/self-criteach.pdf" class="btn btn-secondary">📑 PDF</a>
+                <a href="https://github.com/markli1hoshipu/Plan_LLM" class="btn btn-secondary">💻 Code</a>
+                <a href="https://huggingface.co/Self-CriTeach" class="btn btn-secondary">🤗 Models</a>
+                <a href="#citation" class="btn btn-secondary">📚 Cite</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Interactive Blocks-World Demo -->
+    <section id="demo" class="demo-section">
+        <div class="container">
+            <div id="blocks-demo"></div>
+        </div>
+    </section>
+    <link rel="stylesheet" href="assets/css/blocks-demo.css">
+    <script src="assets/js/blocks-demo.js" defer></script>
+
+    <!-- Abstract Section -->
+    <section id="abstract">
+        <div class="container">
+            <h2>Abstract</h2>
+            <p style="font-size: 1.1rem; line-height: 1.8;">
+                Large Language Models (LLMs) have recently shown strong promise for robotic task planning, particularly through automatic planning domain generation. However, prior approaches largely treat generated planning domains as planning utilities, which are brittle under imperfect logical states and perception noise, overlooking their potential as scalable sources of reasoning supervision and structured reward signals. At the same time, reasoning LLMs depend on chain-of-thought (CoT) supervision that is expensive to collect for robotic tasks, and reinforcement learning (RL) faces challenges on reward engineering.
+            </p>
+            <p style="font-size: 1.1rem; line-height: 1.8;">
+                We propose <strong>Self-CriTeach</strong>, an LLM self-teaching and self-critiquing framework in which an LLM autonomously generates symbolic planning domains that serve a dual role: (i) enabling large-scale generation of robotic planning problem–plan pairs, and (ii) providing structured reward functions. First, the self-written domains enable large-scale generation of symbolic task plans, which are automatically transformed into extended CoT trajectories for supervised fine-tuning. Second, the self-written domains are reused as structured reward functions, providing dense feedback for reinforcement learning without manual reward engineering. This unified training pipeline yields a planning-enhanced LLM with higher planning success rates, stronger cross-task generalization, reduced inference cost, and resistance to imperfect logical states.
+            </p>
+        </div>
+    </section>
+
+    <!-- Key Contributions -->
+    <section id="contributions">
+        <div class="container">
+            <h2>Key Contributions</h2>
+            <div class="contribution-grid">
+                <div class="contribution-card fade-in">
+                    <span class="icon">🔄</span>
+                    <h3>Self-CriTeach Framework</h3>
+                    <p>A novel automated framework that treats LLM self-generated PDDL planning domains as reusable knowledge sources, whose compositional structure powers both scalable supervision for self-teaching and structured rewards for self-critiquing via RL.</p>
+                </div>
+
+                <div class="contribution-card fade-in">
+                    <span class="icon">📚</span>
+                    <h3>Self-Teaching via Data Generation</h3>
+                    <p>The base LLM produces validated long-horizon planning datasets that extend beyond its intrinsic planning capacity, then uses this data for SFT — no human annotation required.</p>
+                </div>
+
+                <div class="contribution-card fade-in">
+                    <span class="icon">🧠</span>
+                    <h3>Automatic Symbolic-to-CoT Transformation</h3>
+                    <p>An automatic procedure that converts symbolic plans and intermediate states into chain-of-thought reasoning traces (plan explanation, state-transition checking, alternative exploration, and failure backtracking), shown to be highly effective for self-teaching.</p>
+                </div>
+
+                <div class="contribution-card fade-in">
+                    <span class="icon">🎯</span>
+                    <h3>Self-Critiquing with Planning Domains</h3>
+                    <p>The system reuses self-generated PDDL planning domains as structured reward functions, enabling post-training RL without any manual reward engineering.</p>
+                </div>
+
+                <div class="contribution-card fade-in">
+                    <span class="icon">📈</span>
+                    <h3>Empirical Gains</h3>
+                    <p>Self-CriTeach yields a planning-enhanced LLM with robust planning performance, stronger cross-task generalization, reduced inference token cost, and resistance to imperfect logical state estimation.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Method Overview -->
+    <section id="method">
+        <div class="container">
+            <h2>Method Overview</h2>
+
+            <figure class="figure">
+                <img src="assets/images/overall_framework.png" alt="Overview of the Self-CriTeach framework." loading="lazy">
+            </figure>
+
+            <ul class="method-steps">
+                <li><strong>LLM Generates Rules.</strong> The base LLM generates PDDL planning domains as planning rules.</li>
+                <li><strong>Rules Generate Data.</strong> Planning domains produce task plans with intermediate states.</li>
+                <li><strong>LLM Explains Data.</strong> The LLM explains raw symbolic plans into Chain-of-Thought traces.</li>
+                <li><strong>LLM Learns.</strong> SFT on CoT traces, then RL with planning domains as reward functions.</li>
+            </ul>
+        </div>
+    </section>
+
+    <!-- Results Section -->
+    <section id="results">
+        <div class="container">
+            <h2>Experimental Results</h2>
+            <p>
+                We evaluate Self-CriTeach on the Blocksworld benchmark suite (seen: BW Classic, BW Hard, BW Align) and on three unseen task types (Prepare Experiment, Reorganize Room, Machine Parts Assembly), measuring <strong>planning success rate</strong> (fraction of tasks fully solved) and <strong>progress score</strong> (fraction of goal predicates satisfied).
+            </p>
+
+            <!-- TABLE 1 -->
+            <h3>Table 1 — SCT-4B vs. SOTA baselines of similar size</h3>
+            <p>
+                Despite operating at a much smaller scale, SCT-4B consistently outperforms every same-tier open-source baseline. The advantage is most pronounced on long-horizon (BW Hard) and unseen task distributions.
+            </p>
+            <div class="table-scroll">
+            <table class="results-table">
+                <thead>
+                    <tr>
+                        <th rowspan="2">Model</th>
+                        <th colspan="3">Seen — Success Rate</th>
+                        <th colspan="3">Unseen — Success Rate</th>
+                        <th colspan="2">Overall</th>
+                    </tr>
+                    <tr>
+                        <th>BW Classic</th><th>BW Hard</th><th>BW Align</th>
+                        <th>Prep. Exp.</th><th>Reorg. Room</th><th>Mach. Parts</th>
+                        <th>Success</th><th>Progress</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr class="highlight">
+                        <td><strong>SCT-4B (ours)</strong></td>
+                        <td class="best">0.60</td><td class="best">0.45</td><td class="best">0.75</td>
+                        <td class="best">0.45</td><td>0.18</td><td class="best">0.50</td>
+                        <td class="best">0.46</td><td class="best">0.76</td>
+                    </tr>
+                    <tr><td>Qwen3-8B</td><td>0.48</td><td>0.28</td><td>0.69</td><td>0.33</td><td><strong>0.19</strong></td><td>0.40</td><td>0.35</td><td>0.68</td></tr>
+                    <tr><td>Qwen3-4B</td><td>0.41</td><td>0.24</td><td>0.42</td><td>0.24</td><td>0.12</td><td>0.34</td><td>0.26</td><td>0.59</td></tr>
+                    <tr><td>Mistral-24B</td><td>0.21</td><td>0.11</td><td>0.71</td><td>0.18</td><td>0.10</td><td>0.12</td><td>0.21</td><td>0.49</td></tr>
+                    <tr><td>Ministral-8B</td><td>0.03</td><td>0.02</td><td>0.05</td><td>0.01</td><td>0.02</td><td>0.02</td><td>0.02</td><td>0.14</td></tr>
+                    <tr><td>Gemma3-12B</td><td>0.09</td><td>0.08</td><td>0.14</td><td>0.06</td><td>0.04</td><td>0.11</td><td>0.08</td><td>0.56</td></tr>
+                    <tr><td>Gemma3-4B</td><td>0.01</td><td>0.01</td><td>0.01</td><td>0.01</td><td>0.01</td><td>0.01</td><td>0.01</td><td>0.44</td></tr>
+                    <tr><td>GPT-4o</td><td>0.31</td><td>0.17</td><td>0.54</td><td>0.10</td><td>0.05</td><td>0.11</td><td>0.19</td><td>0.55</td></tr>
+                </tbody>
+            </table>
+            </div>
+            <p class="result-takeaway">
+                <strong>Takeaway:</strong> SCT-4B delivers a +20% absolute gain in overall success rate over its base model Qwen3-4B, including +21% on BW Hard — evidence that the gains come from internalized planning capability, not memorization.
+            </p>
+
+            <!-- TABLE 2 -->
+            <h3>Table 2 — SCT vs. training/inference baselines (Qwen3-4B backbone)</h3>
+            <p>
+                Holding the backbone fixed at Qwen3-4B, we compare Self-CriTeach against distillation from a 30B reasoning model, majority voting, self-distillation, and prompt-engineered CoT.
+            </p>
+            <div class="table-scroll">
+            <table class="results-table">
+                <thead>
+                    <tr>
+                        <th rowspan="2">Method</th>
+                        <th colspan="3">Seen — Success Rate</th>
+                        <th colspan="3">Unseen — Success Rate</th>
+                        <th colspan="2">Overall</th>
+                    </tr>
+                    <tr>
+                        <th>BW Classic</th><th>BW Hard</th><th>BW Align</th>
+                        <th>Prep. Exp.</th><th>Reorg. Room</th><th>Mach. Parts</th>
+                        <th>Success</th><th>Progress</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr class="highlight">
+                        <td><strong>SCT-4B (ours)</strong></td>
+                        <td class="best">0.60</td><td class="best">0.45</td><td class="best">0.75</td>
+                        <td class="best">0.45</td><td class="best">0.18</td><td class="best">0.50</td>
+                        <td class="best">0.46</td><td class="best">0.76</td>
+                    </tr>
+                    <tr><td>30B-Distill</td><td>0.50</td><td>0.31</td><td>0.74</td><td>0.23</td><td>0.16</td><td>0.49</td><td>0.36</td><td>0.54</td></tr>
+                    <tr><td>Majority Vote</td><td>0.46</td><td>0.26</td><td>0.49</td><td>0.30</td><td>0.15</td><td>0.39</td><td>0.32</td><td>0.66</td></tr>
+                    <tr><td>Self-Distill</td><td>0.45</td><td>0.23</td><td>0.44</td><td>0.25</td><td>0.13</td><td>0.35</td><td>0.28</td><td>0.62</td></tr>
+                    <tr><td>Prompt-CoT</td><td>0.43</td><td>0.22</td><td>0.45</td><td>0.24</td><td>0.12</td><td>0.33</td><td>0.27</td><td>0.64</td></tr>
+                </tbody>
+            </table>
+            </div>
+            <p class="result-takeaway">
+                <strong>Takeaway:</strong> SCT-4B beats every alternative training/inference recipe — including distillation from a 30B model — suggesting symbolic-CoT supervision provides higher-quality signal than scaling up the teacher.
+            </p>
+
+            <!-- FIGURE 2 -->
+            <h3>Figure 2 — Planning efficiency: success rate vs. token cost</h3>
+            <figure class="figure figure-half">
+                <img src="assets/images/token_cost_vs_success.png" alt="Scatter plot showing overall success rate versus average per-plan token cost; SCT-4B sits in the upper-left, achieving high success at low token cost." loading="lazy">
+                <figcaption>
+                    <strong>Figure 2.</strong> Overall success rate vs. average per-plan token cost across top-performing baseline approaches. SCT-4B sits in the upper-left frontier — high success at low cost. Symbolic-CoT supervision eliminates reasoning steps that do not contribute to planning, producing concise yet effective reasoning traces.
+                </figcaption>
+            </figure>
+
+            <!-- TABLE 3 -->
+            <h3>Table 3 — Component ablation (vs. Qwen3-4B base)</h3>
+            <p>
+                We isolate each Self-CriTeach component: SFT only (SCT<sub>SFT</sub>), the longer-horizon CCS objective (SCT<sub>LCCS</sub>), Constrained Policy Optimization (SCT<sub>CPO</sub>), DPO (SCT<sub>DPO</sub>), and training on raw symbolic plans without CoT transformation (SCT<sub>Symbol</sub>).
+            </p>
+            <div class="table-scroll">
+            <table class="results-table">
+                <thead>
+                    <tr>
+                        <th rowspan="2">Variant</th>
+                        <th colspan="3">Seen — Success Rate</th>
+                        <th colspan="3">Unseen — Success Rate</th>
+                        <th colspan="2">Overall</th>
+                    </tr>
+                    <tr>
+                        <th>BW Classic</th><th>BW Hard</th><th>BW Align</th>
+                        <th>Prep. Exp.</th><th>Reorg. Room</th><th>Mach. Parts</th>
+                        <th>Success</th><th>Progress</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr class="highlight">
+                        <td><strong>SCT-4B (full)</strong></td>
+                        <td class="best">0.60</td><td class="best">0.45</td><td>0.75</td>
+                        <td class="best">0.45</td><td class="best">0.18</td><td class="best">0.50</td>
+                        <td class="best">0.46</td><td class="best">0.76</td>
+                    </tr>
+                    <tr><td>SCT<sub>SFT</sub>-4B</td><td>0.58</td><td>0.41</td><td>0.67</td><td>0.42</td><td>0.17</td><td>0.49</td><td>0.43</td><td>0.67</td></tr>
+                    <tr><td>SCT<sub>LCCS</sub>-4B</td><td>0.49</td><td>0.36</td><td>0.51</td><td>0.25</td><td>0.17</td><td>0.30</td><td>0.31</td><td>0.71</td></tr>
+                    <tr><td>SCT<sub>CPO</sub>-4B</td><td>0.52</td><td>0.33</td><td>0.52</td><td>0.29</td><td>0.17</td><td>0.35</td><td>0.31</td><td>0.69</td></tr>
+                    <tr><td>SCT<sub>DPO</sub>-4B</td><td>0.47</td><td>0.27</td><td>0.49</td><td>0.27</td><td>0.16</td><td>0.36</td><td>0.29</td><td>0.67</td></tr>
+                    <tr><td>SCT<sub>Symbol</sub>-4B</td><td>0.54</td><td>0.34</td><td class="best">0.84</td><td>0.16</td><td>0.14</td><td class="best">0.50</td><td>0.38</td><td>0.62</td></tr>
+                    <tr><td>Qwen3-4B (base)</td><td>0.41</td><td>0.24</td><td>0.42</td><td>0.24</td><td>0.12</td><td>0.34</td><td>0.26</td><td>0.59</td></tr>
+                </tbody>
+            </table>
+            </div>
+            <p class="result-takeaway">
+                <strong>Takeaway:</strong> SFT alone already moves overall success from 0.26 → 0.43; adding RL with structured rewards pushes it to 0.46. CPO consistently outperforms DPO. Training on raw symbolic plans <em>without</em> the CoT transformation (SCT<sub>Symbol</sub>) helps seen tasks but generalizes poorly to unseen ones, confirming the value of symbolic-to-CoT supervision.
+            </p>
+        </div>
+    </section>
+
+    <!-- Real Robot Experiments -->
+    <section id="real-robot">
+        <div class="container">
+            <h2>Real Robot Experiments</h2>
+            <p>
+                PDDL-based task planners are brittle under incomplete or noisy logical states from imperfect perception. We deploy SCT-4B on a real UR5e robot — using its control API as low-level skills — and compare against a classical PDDL solver on two tasks under two perception pipelines: a <strong>rule-based classifier</strong> (low noise) and a <strong>VLM</strong> (Qwen3-VL-4B, high noise) that predicts logical states directly from images. Ten trials per task.
+            </p>
+
+            <div class="video-grid">
+                <figure class="video-figure">
+                    <video controls preload="metadata" playsinline muted loop>
+                        <source src="assets/videos/organize_room.mp4" type="video/mp4">
+                        Your browser does not support the video tag.
+                    </video>
+                    <figcaption><strong>Reorganize Room.</strong> 13-step plan executed by SCT-4B on a UR5e.</figcaption>
+                </figure>
+
+                <figure class="video-figure">
+                    <video controls preload="metadata" playsinline muted loop>
+                        <source src="assets/videos/prepare_lab.mp4" type="video/mp4">
+                        Your browser does not support the video tag.
+                    </video>
+                    <figcaption><strong>Prepare WetLab Experiment.</strong> 8-step water-bath heating routine.</figcaption>
+                </figure>
+            </div>
+
+            <h3>Table 5 — Real-robot success rates</h3>
+            <p>Comparison between SCT-4B and a classical PDDL solver under two perception pipelines. SCT-4B is markedly more robust to noisy logical-state estimates.</p>
+            <div class="table-scroll">
+            <table class="results-table">
+                <thead>
+                    <tr>
+                        <th rowspan="2">Logical-State Estimator</th>
+                        <th colspan="2"><strong>SCT-4B</strong> (ours)</th>
+                        <th colspan="2">PDDL Solver</th>
+                    </tr>
+                    <tr>
+                        <th>Room</th><th>Lab</th>
+                        <th>Room</th><th>Lab</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Qwen3-VL-4B <span class="muted">(high noise)</span></td>
+                        <td class="best">0.70</td><td class="best">0.60</td>
+                        <td>0.40</td><td>0.20</td>
+                    </tr>
+                    <tr>
+                        <td>Rule-based Classifier <span class="muted">(low noise)</span></td>
+                        <td class="best">0.80</td><td class="best">0.90</td>
+                        <td>0.70</td><td>0.70</td>
+                    </tr>
+                </tbody>
+            </table>
+            </div>
+            <p class="result-takeaway">
+                <strong>Takeaway:</strong> Under the high-noise VLM pipeline, the PDDL solver collapses (0.40 / 0.20) while SCT-4B retains 0.70 / 0.60 — it reasons over partial symbolic observations rather than failing fast on missing or inconsistent predicates.
+            </p>
+        </div>
+    </section>
+
+    <!-- Code & Resources -->
+    <section id="code">
+        <div class="container">
+            <h2>Code & Resources</h2>
+
+            <div class="resource-grid">
+                <div class="resource-card">
+                    <span class="icon">💻</span>
+                    <h3>GitHub Repository</h3>
+                    <p>Complete implementation with training scripts, evaluation pipeline, and documentation.</p>
+                    <a href="https://github.com/markli1hoshipu/Plan_LLM" class="btn btn-primary">View Code</a>
+                </div>
+
+                <div class="resource-card">
+                    <span class="icon">🤗</span>
+                    <h3>HuggingFace Models</h3>
+                    <p>SCT-Qwen3-4B + SCT-Llama-3.1-8B plus intermediate training-curve checkpoints, in one repo with backbone subfolders.</p>
+                    <a href="https://huggingface.co/Self-CriTeach/SCT" class="btn btn-primary">Get Models</a>
+                </div>
+
+                <div class="resource-card">
+                    <span class="icon">📊</span>
+                    <h3>Dataset</h3>
+                    <p>7,476 training samples and 2,800 evaluation samples — seen + unseen PDDL planning problems.</p>
+                    <a href="https://huggingface.co/datasets/Self-CriTeach/pddl-planning-data" class="btn btn-primary">Get Dataset</a>
+                </div>
+
+            </div>
+
+            <h3>Quick Start</h3>
+            <pre><code># Install
+pip install -r requirements.txt
+
+# Load dataset
+from datasets import load_dataset
+ds = load_dataset("Self-CriTeach/pddl-planning-data")
+
+# Once models are published, load by backbone via subfolder:
+from transformers import AutoModelForCausalLM, AutoTokenizer
+model = AutoModelForCausalLM.from_pretrained("Self-CriTeach/SCT", subfolder="Qwen3-4B")
+tokenizer = AutoTokenizer.from_pretrained("Self-CriTeach/SCT", subfolder="Qwen3-4B")
+
+# Generate plan
+problem = "Static predicates: [[box, 1], [box, 2], [table, 0], [robot, r]]..."
+inputs = tokenizer(problem, return_tensors="pt")
+outputs = model.generate(**inputs, max_new_tokens=2048)
+plan = tokenizer.decode(outputs[0], skip_special_tokens=True)</code></pre>
+        </div>
+    </section>
+
+    <!-- Citation -->
+    <section id="citation">
+        <div class="container">
+            <h2>Citation</h2>
+            <p>If you find this work useful, please cite:</p>
+
+            <div class="citation-box">
+                <button class="copy-button" onclick="copyBibtex()">Copy BibTeX</button>
+                <pre><code id="bibtex">@article{huang2025selfcriteach,
+  title         = {Self-CriTeach: LLM Self-Teaching and Self-Critiquing for Improving Robotic Planning via Automated Domain Generation},
+  author        = {Huang, Jinbang and Li, Zhiyuan and Hu, Yuanzhao and Zhang, Zhanguang and Coates, Mark and Quan, Xingyue and Zhang, Yingxue},
+  journal       = {arXiv preprint arXiv:2509.21543},
+  year          = {2025},
+  url           = {https://arxiv.org/abs/2509.21543}
+}</code></pre>
+            </div>
+        </div>
+    </section>
+
+    <!-- Team -->
+    <section id="team">
+        <div class="container">
+            <h2>Team</h2>
+            <div class="team-grid">
+                <div class="team-member">
+                    <h4>Jinbang Huang</h4>
+                    <p class="affiliation">Huawei Noah's Ark Lab</p>
+                </div>
+                <div class="team-member">
+                    <h4>Zhiyuan Li</h4>
+                    <p class="affiliation">Huawei Noah's Ark Lab<br>University of Toronto</p>
+                </div>
+                <div class="team-member">
+                    <h4>Yuanzhao Hu</h4>
+                    <p class="affiliation">Huawei Noah's Ark Lab<br>University of British Columbia</p>
+                </div>
+                <div class="team-member">
+                    <h4>Zhanguang Zhang</h4>
+                    <p class="affiliation">Huawei Noah's Ark Lab</p>
+                </div>
+                <div class="team-member">
+                    <h4>Mark Coates</h4>
+                    <p class="affiliation">McGill University</p>
+                </div>
+                <div class="team-member">
+                    <h4>Xingyue Quan</h4>
+                    <p class="affiliation">Huawei Noah's Ark Lab</p>
+                </div>
+                <div class="team-member">
+                    <h4>Yingxue Zhang</h4>
+                    <p class="affiliation">Huawei Noah's Ark Lab</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+        <div class="container">
+            <p>&copy; 2026 The authors. All rights reserved.</p>
+            <p>
+                <a href="https://arxiv.org/abs/2509.21543">arXiv</a> |
+                <a href="papers/self-criteach.pdf">PDF</a> |
+                <a href="https://github.com/markli1hoshipu/Plan_LLM">GitHub</a> |
+                <a href="https://huggingface.co/Self-CriTeach">HuggingFace</a>
+            </p>
+        </div>
+    </footer>
+
+    <!-- JavaScript for copy button -->
+    <script>
+        function copyBibtex() {
+            const bibtex = document.getElementById('bibtex').textContent;
+            navigator.clipboard.writeText(bibtex).then(() => {
+                const button = document.querySelector('.copy-button');
+                button.textContent = '✓ Copied!';
+                setTimeout(() => {
+                    button.textContent = 'Copy BibTeX';
+                }, 2000);
+            });
+        }
+
+        // Smooth scrolling for navigation links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            });
+        });
+
+        // Add fade-in animation on scroll
+        const observerOptions = {
+            threshold: 0.1,
+            rootMargin: '0px 0px -100px 0px'
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('fade-in');
+                }
+            });
+        }, observerOptions);
+
+        document.querySelectorAll('.contribution-card, .resource-card').forEach(el => {
+            observer.observe(el);
+        });
+    </script>
+</body>
+</html>
